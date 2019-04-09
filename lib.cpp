@@ -1,0 +1,110 @@
+#include <iostream>
+#include <codecvt>
+#include <string>
+#include <cpprest/http_client.h>
+#include <cpprest/json.h>
+#include <cpprest/filestream.h>
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/support/date_time.hpp>
+#include <boost/format.hpp>
+
+#include "types.h"
+
+using namespace utility;
+using namespace web;
+using namespace web::http;
+using namespace web::http::client;
+
+void init_log()
+{
+  static bool inited = false;
+  if (!inited) {
+    inited = true;
+    boost::log::add_common_attributes();
+    boost::log::add_file_log
+        (
+            boost::log::keywords::file_name = "iq-loyalty_%N.log",
+            boost::log::keywords::open_mode = std::ios_base::app,
+            boost::log::keywords::rotation_size = 10 * 1024 * 1024,
+            boost::log::keywords::format =
+                (
+                    boost::log::expressions::stream
+                        << boost::log::expressions::format_date_time< boost::posix_time::ptime >("TimeStamp", "%b %d %Y %H:%M:%S") << " "
+                        << boost::log::expressions::attr<boost::log::attributes::current_process_id::value_type>("ProcessID") << ": "
+                        << "%local0-" << boost::log::trivial::severity
+                        << "-" << std::hex << std::setw(6) << std::setfill('0') << boost::log::expressions::attr< unsigned int >("LineID")
+                        << ": " << boost::log::expressions::smessage
+                )
+        );
+  }
+
+  BOOST_LOG_TRIVIAL(info) << "============= START LIB =============";
+}
+
+
+struct loyalty_cart_data {
+  std::wstring phone;
+  INT64 bonusSum;
+};
+
+std::string to_utf8 (const std::wstring& str)
+{
+  std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+  return myconv.to_bytes(str);
+}
+std::string to_utf8 (const std::string& str)
+{
+  return str;
+}
+
+void load_cart(const utility::string_t &phone) {
+  init_log();
+  BOOST_LOG_TRIVIAL(info) << boost::format("Load loyalty cart for %1%") % to_utf8(phone);
+
+  utility::stringstream_t body;
+
+  auto query = U("query($shopId: String!, $shopSecret: String!, $clientPhone: String!) {"
+                 "  shop(id: $shopId, secret: $shopSecret) {"
+                 "    loyaltyCard(phone: $clientPhone) {"
+                 "      bonusSum"
+                 "    }"
+                 "  }"
+                 "}");
+
+  json::value request = json::value::object({
+                                                {U("query"), json::value::string(query)},
+                                                {U("operationName"), json::value::null()},
+                                                {U("variables"), json::value::object({
+                                                                                         {U("shopId"), json::value::string(U("hrS2LU3Z3SLJoVUuBXgk"))},
+                                                                                         {U("shopSecret"), json::value::string(U("2"))},
+                                                                                         {U("clientPhone"), json::value::string(phone)},
+                                                })},
+                                            });
+
+  // Create http_client to send the request.
+  http_client client(U("https://us-central1-iq-loyalty-system.cloudfunctions.net/"));
+
+  // Build request URI and start the request.
+  uri_builder builder(U("/api/v1/graphql"));
+
+  try
+  {
+    BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL >>> %1%") % to_utf8(request.serialize());
+
+    client.request(methods::POST, builder.to_string(), request).then([=](http_response response) {
+      return response.extract_json();
+    }).then([=](json::value response) {
+      BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL <<< %1%") % to_utf8(response.serialize());
+    }).wait();
+  }
+  catch (const std::exception &e)
+  {
+    BOOST_LOG_TRIVIAL(error) << boost::format("Error exception: %1%") % e.what();
+  }
+}
