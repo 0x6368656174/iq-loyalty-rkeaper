@@ -100,6 +100,8 @@ loyalty_cart_data load_cart(const utility::string_t &phone) {
 
   loyalty_cart_data result = {phone, 0};
 
+  loyalty_cart_data result = {phone, 0};
+
   try
   {
     BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL >>> %1%") % to_utf8(request.serialize());
