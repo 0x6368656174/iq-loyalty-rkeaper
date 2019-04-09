@@ -168,3 +168,14 @@ int GetCardInfoEx(
 
   return 0;
 }
+
+extern "C" int IQLOYALTY_EXPORT TransactionsEx(DWORD count,
+                                               void* transactions,
+                                               char* inputBuffer,
+                                               DWORD inputBufferLength,
+                                               WORD inputBufferKind,
+                                               char* outputBuffer,
+                                               DWORD outputBufferLength,
+                                               WORD outputBufferKind) {
+  return 1;
+}

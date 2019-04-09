@@ -46,6 +46,20 @@ extern "C" int IQLOYALTY_EXPORT GetCardInfoEx(
         DWORD outputLength,
         WORD outputKind);
 
+struct Transaction {
+
+};
+
+extern "C" int IQLOYALTY_EXPORT TransactionsEx(DWORD count,
+                                               void* transactions,
+                                               char* inputBuffer,
+                                               DWORD inputBufferLength,
+                                               WORD inputBufferKind,
+                                               char* outputBuffer,
+                                               DWORD outputBufferLength,
+                                               WORD outputBufferKind);
+
+
 extern "C" void IQLOYALTY_EXPORT Init();
 
 extern "C" void IQLOYALTY_EXPORT Done();
