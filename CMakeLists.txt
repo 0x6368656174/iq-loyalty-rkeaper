@@ -16,8 +16,15 @@ endif(MSVC)
 find_package(cpprestsdk  CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS log_setup log date_time)
 
-add_library(iq-loyalty types.h lib.h lib.cpp)
-target_link_libraries(iq-loyalty PRIVATE cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal ${Boost_LIBRARIES})
+add_library(iqloyalty SHARED lib.cpp)
+target_link_libraries(iqloyalty PRIVATE cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal ${Boost_LIBRARIES})
+
+include (GenerateExportHeader)
+GENERATE_EXPORT_HEADER(iqloyalty
+        BASE_NAME iqloyalty
+        EXPORT_MACRO_NAME shared_exports
+        EXPORT_FILE_NAME iqloyalty_exports.h
+        STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC)
 
 add_executable(test main.cpp)
-target_link_libraries(test PRIVATE iq-loyalty)
+target_link_libraries(test PRIVATE iqloyalty)

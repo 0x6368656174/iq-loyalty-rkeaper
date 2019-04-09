@@ -15,13 +15,14 @@
 #include <boost/format.hpp>
 
 #include "types.h"
+#include "lib.h"
 
 using namespace utility;
 using namespace web;
 using namespace web::http;
 using namespace web::http::client;
 
-void init_log()
+void Init()
 {
   static bool inited = false;
   if (!inited) {
@@ -31,7 +32,7 @@ void init_log()
         (
             boost::log::keywords::file_name = "iq-loyalty_%N.log",
             boost::log::keywords::open_mode = std::ios_base::app,
-            boost::log::keywords::rotation_size = 10 * 1024 * 1024,
+            boost::log::keywords::rotation_size = 5 * 1024 * 1024,
             boost::log::keywords::format =
                 (
                     boost::log::expressions::stream
@@ -44,12 +45,15 @@ void init_log()
         );
   }
 
-  BOOST_LOG_TRIVIAL(info) << "============= START LIB =============";
+  BOOST_LOG_TRIVIAL(info) << "============= INIT LIB =============";
 }
 
+void Done() {
+  BOOST_LOG_TRIVIAL(info) << "============= DONE LIB =============";
+}
 
 struct loyalty_cart_data {
-  std::wstring phone;
+  utility::string_t phone;
   INT64 bonusSum;
 };
 
@@ -63,8 +67,7 @@ std::string to_utf8 (const std::string& str)
   return str;
 }
 
-void load_cart(const utility::string_t &phone) {
-  init_log();
+loyalty_cart_data load_cart(const utility::string_t &phone) {
   BOOST_LOG_TRIVIAL(info) << boost::format("Load loyalty cart for %1%") % to_utf8(phone);
 
   utility::stringstream_t body;
@@ -93,18 +96,72 @@ void load_cart(const utility::string_t &phone) {
   // Build request URI and start the request.
   uri_builder builder(U("/api/v1/graphql"));
 
+  loyalty_cart_data result = {phone, 0};
+
   try
   {
     BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL >>> %1%") % to_utf8(request.serialize());
 
-    client.request(methods::POST, builder.to_string(), request).then([=](http_response response) {
+    client.request(methods::POST, builder.to_string(), request).then([](http_response response) {
       return response.extract_json();
-    }).then([=](json::value response) {
+    }).then([&](json::value response) {
       BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL <<< %1%") % to_utf8(response.serialize());
+
+      result.bonusSum = response.as_object().at(U("shop")).as_object().at(U("loyaltyCard")).as_object().at(U("bonusSum")).as_number().to_int64();
     }).wait();
   }
   catch (const std::exception &e)
   {
     BOOST_LOG_TRIVIAL(error) << boost::format("Error exception: %1%") % e.what();
   }
+
+  return result;
+}
+
+int GetCardInfoEx(
+    INT64 cardNumber,
+    DWORD restaurantCode,
+    DWORD unitNumber,
+    CardInfo* cardInfo,
+    char* inputBuffer,
+    DWORD inputLength,
+    WORD inputKind,
+    char* outputBuffer,
+    DWORD outputLength,
+    WORD outputKind) {
+  if (cardNumber < 100000000) {
+    return 1;
+  }
+
+  if (cardNumber > 999999999) {
+    return 1;
+  }
+
+
+  utility::string_t phone = U((boost::format("+79%1%") % cardNumber).str());
+
+  auto cartData = load_cart(phone);
+
+  cardInfo->exists = 0;
+  cardInfo->seizure = 0;
+  cardInfo->expired = 0;
+  cardInfo->disabled = 0;
+  cardInfo->needConfirmation = 0;
+  cardInfo->locked = 0;
+  cardInfo->ownerNubmer = cardNumber;
+  cardInfo->accountNumber = 1;
+  cardInfo->defaulterNumber = 1;
+  cardInfo->bonusNumber = 19;
+  cardInfo->discountNumber = 10;
+  cardInfo->maxDiscountSum = 0;
+  cardInfo->bonusSum = cartData.bonusSum;
+  cardInfo->bonusSum2 = 0;
+  cardInfo->bonusSum3 = 0;
+  cardInfo->bonusSum4 = 0;
+  cardInfo->bonusSum5 = 0;
+  cardInfo->bonusSum6 = 0;
+  cardInfo->bonusSum7 = 0;
+  cardInfo->bonusSum8 = 0;
+
+  return 0;
 }
