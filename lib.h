@@ -3,6 +3,7 @@
 
 #include <string>
 #include "types.h"
+#include "iqloyalty_export.h"
 
 struct CardInfo {
     WORD length;
@@ -20,20 +21,20 @@ struct CardInfo {
     WORD bonusNumber;
     WORD discountNumber;
     INT64 maxDiscountSum;
-    INT64 discountSum;
-    INT64 discountSum2;
-    INT64 discountSum3;
-    INT64 discountSum4;
-    INT64 discountSum5;
-    INT64 discountSum6;
-    INT64 discountSum7;
-    INT64 discountSum8;
+    INT64 bonusSum;
+    INT64 bonusSum2;
+    INT64 bonusSum3;
+    INT64 bonusSum4;
+    INT64 bonusSum5;
+    INT64 bonusSum6;
+    INT64 bonusSum7;
+    INT64 bonusSum8;
     char cardInfo [256];
     char screenInfo [256];
     char printInfo [256];
 };
 
-int GetCardInfoEx(
+IQLOYALTY_EXPORT int GetCardInfoEx(
         INT64 cardNumber,
         DWORD restaurantCode,
         DWORD unitNumber,
@@ -45,6 +46,8 @@ int GetCardInfoEx(
         DWORD outputLength,
         WORD outputKind);
 
-void load_cart(const std::string &phone);
+IQLOYALTY_EXPORT void Init();
+
+IQLOYALTY_EXPORT void Done();
 
 #endif //IQ_LOYALTY_SYSTEM_RKEEPER_LIB_H
