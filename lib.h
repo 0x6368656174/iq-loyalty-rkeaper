@@ -34,7 +34,7 @@ struct CardInfo {
     char printInfo [256];
 };
 
-IQLOYALTY_EXPORT int GetCardInfoEx(
+extern "C" int IQLOYALTY_EXPORT GetCardInfoEx(
         INT64 cardNumber,
         DWORD restaurantCode,
         DWORD unitNumber,
@@ -46,8 +46,8 @@ IQLOYALTY_EXPORT int GetCardInfoEx(
         DWORD outputLength,
         WORD outputKind);
 
-IQLOYALTY_EXPORT void Init();
+extern "C" void IQLOYALTY_EXPORT Init();
 
-IQLOYALTY_EXPORT void Done();
+extern "C" void IQLOYALTY_EXPORT Done();
 
 #endif //IQ_LOYALTY_SYSTEM_RKEEPER_LIB_H
