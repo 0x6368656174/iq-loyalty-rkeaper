@@ -17,11 +17,14 @@ find_package(cpprestsdk CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS log_setup log date_time)
 
 add_library(iqloyalty SHARED lib.cpp)
-target_link_libraries(iqloyalty PRIVATE cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal ${Boost_LIBRARIES})
+target_link_libraries(iqloyalty PRIVATE
+        cpprestsdk::cpprest
+        cpprestsdk::cpprestsdk_zlib_internal
+        cpprestsdk::cpprestsdk_boost_internal
+        cpprestsdk::cpprestsdk_openssl_internal
+        ${Boost_LIBRARIES}
+        )
 
 include (GenerateExportHeader)
 GENERATE_EXPORT_HEADER(iqloyalty)
 target_include_directories(iqloyalty PUBLIC ${CMAKE_BINARY_DIR})
-
-add_executable(test main.cpp)
-target_link_libraries(test PRIVATE iqloyalty)
