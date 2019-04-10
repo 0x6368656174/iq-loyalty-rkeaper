@@ -5,6 +5,7 @@
 #include "types.h"
 #include "iqloyalty_export.h"
 
+#pragma pack(1)
 struct CardInfo {
     WORD length;
     BYTE exists;

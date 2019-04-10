@@ -35,6 +35,7 @@ void Init()
             boost::log::keywords::file_name = "iq-loyalty_%N.log",
             boost::log::keywords::open_mode = std::ios_base::app,
             boost::log::keywords::rotation_size = 5 * 1024 * 1024,
+            boost::log::keywords::auto_flush = true,
             boost::log::keywords::format =
                 (
                     boost::log::expressions::stream
@@ -109,7 +110,7 @@ loyalty_cart_data load_cart(const utility::string_t &phone) {
     }).then([&](json::value response) {
       BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL <<< %1%") % to_utf8(response.serialize());
 
-      result.bonusSum = response.as_object().at(_XPLATSTR("shop")).as_object().at(_XPLATSTR("loyaltyCard")).as_object().at(_XPLATSTR("bonusSum")).as_number().to_int64();
+      result.bonusSum = response.as_object().at(_XPLATSTR("data")).as_object().at(_XPLATSTR("shop")).as_object().at(_XPLATSTR("loyaltyCard")).as_object().at(_XPLATSTR("bonusSum")).as_number().to_int64();
     }).wait();
   }
   catch (const std::exception &e)
@@ -151,11 +152,13 @@ int GetCardInfoEx(
   cardInfo->disabled = 0;
   cardInfo->needConfirmation = 0;
   cardInfo->locked = 0;
+  std::string ownerName = "Pavel Puckov";
+  ownerName.copy(cardInfo->ownerName, ownerName.size());
   cardInfo->ownerNubmer = cardNumber;
   cardInfo->accountNumber = 1;
   cardInfo->defaulterNumber = 1;
-  cardInfo->bonusNumber = 19;
-  cardInfo->discountNumber = 10;
+  cardInfo->bonusNumber = 10;
+  cardInfo->discountNumber = 19;
   cardInfo->maxDiscountSum = 0;
   cardInfo->bonusSum = cartData.bonusSum;
   cardInfo->bonusSum2 = 0;
@@ -165,6 +168,8 @@ int GetCardInfoEx(
   cardInfo->bonusSum6 = 0;
   cardInfo->bonusSum7 = 0;
   cardInfo->bonusSum8 = 0;
+  std::string cartText = "Test string";
+  cartText.copy(cardInfo->cardInfo, cartText.size());
 
   return 0;
 }
