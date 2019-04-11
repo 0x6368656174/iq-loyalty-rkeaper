@@ -5,6 +5,7 @@
 #include "windows_types.h"
 #include "iqloyalty_export.h"
 #include "card_info.h"
+#include "transaction.h"
 
 extern "C" int IQLOYALTY_EXPORT GetCardInfoEx(
         INT64 card_number,
@@ -19,7 +20,7 @@ extern "C" int IQLOYALTY_EXPORT GetCardInfoEx(
         WORD output_kind);
 
 extern "C" int IQLOYALTY_EXPORT TransactionsEx(DWORD count,
-                                               void* transactions,
+                                               transaction* transactions,
                                                char* input_buffer,
                                                DWORD input_buffer_length,
                                                WORD input_bufferKind,

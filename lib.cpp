@@ -26,6 +26,9 @@
 #include "windows_types.h"
 #include "lib.h"
 
+#define API_HOST _XPLATSTR("https://us-central1-iq-loyalty-system.cloudfunctions.net/")
+#define API_URL _XPLATSTR("/api/v1/graphql")
+
 using namespace utility;
 using namespace web;
 using namespace web::http;
@@ -113,9 +116,7 @@ int GetCardInfoEx(
     }
     utility::string_t phone = _XPLATSTR("+79") + TO_XPALTSTR(card_number);
 
-    BOOST_LOG_TRIVIAL(info) << boost::format("Load loyalty cart for %1%") % to_utf8(phone);
-
-    utility::stringstream_t body;
+    BOOST_LOG_TRIVIAL(info) << boost::format("Load loyalty card for %1%") % to_utf8(phone);
 
     auto query = _XPLATSTR("query($shopId: String!, $shopSecret: String!, $clientPhone: String!) {"
                            "  shop(id: $shopId, secret: $shopSecret) {"
@@ -155,10 +156,10 @@ int GetCardInfoEx(
                                               });
 
     // Create http_client to send the request.
-    http_client client(_XPLATSTR("https://us-central1-iq-loyalty-system.cloudfunctions.net/"));
+    http_client client(API_HOST);
 
     // Build request URI and start the request.
-    uri_builder builder(_XPLATSTR("/api/v1/graphql"));
+    uri_builder builder(API_URL);
 
     BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL >>> %1%") % to_utf8(request.serialize());
 
@@ -210,7 +211,7 @@ int GetCardInfoEx(
       print_text.copy(card_info->print_text, print_text.size() + 1);
     }).wait();
 
-    BOOST_LOG_TRIVIAL(info) << "Load loyalty cart completed";
+    BOOST_LOG_TRIVIAL(info) << "Load loyalty card completed";
   }
   catch (const std::exception &e)
   {
@@ -222,12 +223,128 @@ int GetCardInfoEx(
 }
 
 int TransactionsEx(DWORD count,
-                   void* transactions,
+                   transaction* transactions,
                    char* inputBuffer,
                    DWORD inputBufferLength,
                    WORD inputBufferKind,
                    char* outputBuffer,
                    DWORD outputBufferLength,
                    WORD outputBufferKind) {
-  return 1;
+  try
+  {
+    auto transactions_json = json::value::array(count);
+
+    for (int i = 0; i < count; ++i) {
+      auto one_transaction = *(transactions + i);
+      auto card_number = one_transaction.card_number;
+      if (card_number < 100000000) {
+        return 1;
+      }
+
+      if (card_number > 999999999) {
+        return 1;
+      }
+      utility::string_t phone = _XPLATSTR("+79") + TO_XPALTSTR(card_number);
+
+      BOOST_LOG_TRIVIAL(info) << boost::format("Crate loyalty card transaction for %1%") % to_utf8(phone);
+
+      auto rkeeper_json = json::value::object({
+                                                  {_XPLATSTR("cardNumber"), json::value::number(one_transaction.card_number)},
+                                                  {_XPLATSTR("ownerNumber"), json::value::number(one_transaction.owner_number)},
+                                                  {_XPLATSTR("billNumber"), json::value::number(one_transaction.bill_number)},
+                                                  {_XPLATSTR("operationType"), json::value::number(one_transaction.operation_type)},
+                                                  {_XPLATSTR("amount"), json::value::number(one_transaction.amount)},
+                                                  {_XPLATSTR("restaurantCode"), json::value::number(one_transaction.restaurant_code)},
+                                                  {_XPLATSTR("cashDate"), json::value::number(one_transaction.cash_date)},
+                                                  {_XPLATSTR("cashNumber"), json::value::number(one_transaction.cash_number)},
+                                                  {_XPLATSTR("checkNumber"), json::value::number(one_transaction.check_number)},
+                                                  {_XPLATSTR("tax"), json::value::array({
+                                                                                            json::value::object({
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax1_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax1_percent)},
+                                                                                                                }),
+                                                                                            json::value::object({
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax2_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax2_percent)},
+                                                                                                                }),
+                                                                                            json::value::object({
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax3_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax3_percent)},
+                                                                                                                }),
+                                                                                            json::value::object({
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax4_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax4_percent)},
+                                                                                                                }),
+                                                                                            json::value::object({
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax5_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax5_percent)},
+                                                                                                                }),
+                                                                                            json::value::object({
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax6_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax6_percent)},
+                                                                                                                }),
+                                                                                            json::value::object({
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax7_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax7_percent)},
+                                                                                                                }),
+                                                                                            json::value::object({
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax8_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax8_percent)},
+                                                                                                                }),
+                                                                                        })},
+                                              });
+
+      auto transaction_json = json::value::object({
+                                                      {_XPLATSTR("loyaltyCartPhone"), json::value::string(phone)},
+                                                      {_XPLATSTR("rKeeper"), rkeeper_json},
+                                                  });
+
+      transactions_json.at(i) = transaction_json;
+    }
+
+    BOOST_LOG_TRIVIAL(info) << "Send transactions";
+
+    auto query = _XPLATSTR("mutation ($shopId: String!, $shopSecret: String!, $transactions: [Transaction]!) {"
+                           "  makeTransactions(shopId: $shopId, shopSecret: $shopSecret, transactions: $transactions)"
+                           "}");
+
+    json::value request = json::value::object({
+                                                  {_XPLATSTR("query"), json::value::string(query)},
+                                                  {_XPLATSTR("operationName"), json::value::null()},
+                                                  {_XPLATSTR("variables"), json::value::object({
+                                                                                                   {_XPLATSTR("shopId"), json::value::string(_XPLATSTR("yagoda"))},
+                                                                                                   {_XPLATSTR("shopSecret"), json::value::string(_XPLATSTR("2"))},
+                                                                                                   {_XPLATSTR("transactions"), transactions_json},
+                                                                                               })},
+                                              });
+
+    // Create http_client to send the request.
+    http_client client(API_HOST);
+
+    // Build request URI and start the request.
+    uri_builder builder(API_URL);
+
+    BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL >>> %1%") % to_utf8(request.serialize());
+
+    client.request(methods::POST, builder.to_string(), request).then([](http_response response) {
+      return response.extract_json();
+    }).then([&](json::value response) {
+      BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL <<< %1%") % to_utf8(response.serialize());
+
+      auto result = response.as_object().at(_XPLATSTR("data")).as_object().at(_XPLATSTR("makeTransactions")).as_bool();
+      if (!result) {
+        BOOST_LOG_TRIVIAL(error) << "Wrong answer on send transactions";
+        return 1;
+      }
+    }).wait();
+
+    BOOST_LOG_TRIVIAL(info) << "Send transactions completed";
+  }
+  catch (const std::exception &e)
+  {
+    BOOST_LOG_TRIVIAL(error) << boost::format("Error exception: %1%") % e.what();
+    return 1;
+  }
+
+  return 0;
 }
