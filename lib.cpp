@@ -62,13 +62,90 @@ std::string to_cp1251 (const utility::string_t& str)
 #endif
 }
 
-auto host = API_HOST;
-auto url = API_URL;
-auto shop_id = _XPLATSTR("");
-auto shop_secret = _XPLATSTR("");
+std::wstring ini_path() {
+  wchar_t path_str[2048];
+  GetModuleFileNameW(NULL, path_str, sizeof(path_str));
+  boost::filesystem::wpath p(path_str);
+  auto path = p.parent_path();
+  return (path / boost::filesystem::wpath(L"iqloyalty.ini")).wstring();
+}
+
+utility::string_t api_host() {
+#ifdef _WIN32
+  static std::wstring result = L"";
+  if (result.size() == 0) {
+    wchar_t str[1024];
+    auto path = ini_path();
+
+    GetPrivateProfileStringW(L"general", L"api_host", NULL, str, sizeof(str), path.c_str());
+
+    result = str;
+  }
+
+  return result;
+#else
+  return TO_XPALTSTR("");
+#endif
+}
+
+utility::string_t api_url() {
+#ifdef _WIN32
+  static std::wstring result = L"";
+  if (result.size() == 0) {
+    wchar_t str[1024];
+    auto path = ini_path();
+
+    GetPrivateProfileStringW(L"general", L"api_url", NULL, str, sizeof(str), path.c_str());
+
+    result = str;
+  }
+
+  return result;
+#else
+  return TO_XPALTSTR("");
+#endif
+}
+
+utility::string_t shop_id() {
+#ifdef _WIN32
+  static std::wstring result = L"";
+  if (result.size() == 0) {
+    wchar_t str[1024];
+    auto path = ini_path();
+
+    GetPrivateProfileStringW(L"general", L"shop_id", NULL, str, sizeof(str), path.c_str());
+
+    result = str;
+  }
+
+  return result;
+#else
+  return TO_XPALTSTR("");
+#endif
+}
+
+utility::string_t shop_secret() {
+#ifdef _WIN32
+  static std::wstring result = L"";
+  if (result.size() == 0) {
+    wchar_t str[1024];
+    auto path = ini_path();
+
+    GetPrivateProfileStringW(L"general", L"shop_secret", NULL, str, sizeof(str), path.c_str());
+
+    result = str;
+  }
+
+  return result;
+#else
+  return TO_XPALTSTR("");
+#endif
+}
 
 void Init()
 {
+  BOOST_LOG_TRIVIAL(info) << "============= INIT LIB =============";
+
   static bool inited = false;
   if (!inited) {
     inited = true;
@@ -89,26 +166,7 @@ void Init()
                         << ": " << boost::log::expressions::smessage
                 )
         );
-
-#ifdef _WIN32
-    wchar_t host_str[1024];
-    wchar_t url_str[1024];
-    wchar_t shop_id_str[1024];
-    wchar_t shop_secret_str[1024];
-
-    GetPrivateProfileStringW(NULL, L"host", NULL, host_str, sizeof(host_str), L"iqloyalty.ini");
-    GetPrivateProfileStringW(NULL, L"url", NULL, url_str, sizeof(url_str), L"iqloyalty.ini");
-    GetPrivateProfileStringW(NULL, L"shop_id", NULL, shop_id_str, sizeof(shop_id_str), L"iqloyalty.ini");
-    GetPrivateProfileStringW(NULL, L"shop_secret", NULL, shop_secret_str, sizeof(shop_secret_str), L"iqloyalty.ini");
-
-    host = host_str;
-    url = url_str;
-    shop_id = shop_id_str;
-    shop_secret = shop_secret_str;
-#endif
   }
-
-  BOOST_LOG_TRIVIAL(info) << "============= INIT LIB =============";
 }
 
 void Done() {
@@ -171,17 +229,17 @@ int GetCardInfoEx(
                                                   {_XPLATSTR("query"), json::value::string(query)},
                                                   {_XPLATSTR("operationName"), json::value::null()},
                                                   {_XPLATSTR("variables"), json::value::object({
-                                                                                                   {_XPLATSTR("shopId"), json::value::string(_XPLATSTR("yagoda"))},
-                                                                                                   {_XPLATSTR("shopSecret"), json::value::string(_XPLATSTR("2"))},
+                                                                                                   {_XPLATSTR("shopId"), json::value::string(shop_id())},
+                                                                                                   {_XPLATSTR("shopSecret"), json::value::string(shop_secret())},
                                                                                                    {_XPLATSTR("clientPhone"), json::value::string(phone)},
                                                                                                })},
                                               });
 
     // Create http_client to send the request.
-    http_client client(API_HOST);
+    http_client client(api_host());
 
     // Build request URI and start the request.
-    uri_builder builder(API_URL);
+    uri_builder builder(api_url());
 
     BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL >>> %1%") % to_utf8(request.serialize());
 
@@ -334,17 +392,17 @@ int TransactionsEx(DWORD count,
                                                   {_XPLATSTR("query"), json::value::string(query)},
                                                   {_XPLATSTR("operationName"), json::value::null()},
                                                   {_XPLATSTR("variables"), json::value::object({
-                                                                                                   {_XPLATSTR("shopId"), json::value::string(_XPLATSTR("yagoda"))},
-                                                                                                   {_XPLATSTR("shopSecret"), json::value::string(_XPLATSTR("2"))},
+                                                                                                   {_XPLATSTR("shopId"), json::value::string(shop_id())},
+                                                                                                   {_XPLATSTR("shopSecret"), json::value::string(shop_secret())},
                                                                                                    {_XPLATSTR("transactions"), transactions_json},
                                                                                                })},
                                               });
 
     // Create http_client to send the request.
-    http_client client(API_HOST);
+    http_client client(api_host());
 
     // Build request URI and start the request.
-    uri_builder builder(API_URL);
+    uri_builder builder(api_url());
 
     BOOST_LOG_TRIVIAL(trace) << boost::format("GraphQL >>> %1%") % to_utf8(request.serialize());
 
