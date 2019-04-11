@@ -108,11 +108,11 @@ int GetCardInfoEx(
   try
   {
     if (card_number < 100000000) {
-      return 1;
+      throw std::exception("Card number too small");
     }
 
     if (card_number > 999999999) {
-      return 1;
+      throw std::exception("Card number too big");
     }
     utility::string_t phone = _XPLATSTR("+79") + TO_XPALTSTR(card_number);
 
@@ -223,7 +223,7 @@ int GetCardInfoEx(
 }
 
 int TransactionsEx(DWORD count,
-                   transaction* transactions,
+                   transaction** transactions,
                    char* inputBuffer,
                    DWORD inputBufferLength,
                    WORD inputBufferKind,
@@ -236,60 +236,60 @@ int TransactionsEx(DWORD count,
 
     for (DWORD i = 0; i < count; ++i) {
       auto one_transaction = *(transactions + i);
-      auto card_number = one_transaction.card_number;
+      auto card_number = one_transaction->card_number;
       if (card_number < 100000000) {
-        return 1;
+        throw std::exception("Card number too small");
       }
 
       if (card_number > 999999999) {
-        return 1;
+        throw std::exception("Card number too big");
       }
       utility::string_t phone = _XPLATSTR("+79") + TO_XPALTSTR(card_number);
 
       BOOST_LOG_TRIVIAL(info) << boost::format("Crate loyalty card transaction for %1%") % to_utf8(phone);
 
       auto rkeeper_json = json::value::object({
-                                                  {_XPLATSTR("cardNumber"), json::value::number(one_transaction.card_number)},
-                                                  {_XPLATSTR("ownerNumber"), json::value::number(one_transaction.owner_number)},
-                                                  {_XPLATSTR("billNumber"), json::value::number(static_cast<uint32_t>(one_transaction.bill_number))},
-                                                  {_XPLATSTR("operationType"), json::value::number(one_transaction.operation_type)},
-                                                  {_XPLATSTR("amount"), json::value::number(one_transaction.amount)},
-                                                  {_XPLATSTR("restaurantCode"), json::value::number(one_transaction.restaurant_code)},
-                                                  {_XPLATSTR("cashDate"), json::value::number(static_cast<uint32_t>(one_transaction.cash_date))},
-                                                  {_XPLATSTR("cashNumber"), json::value::number(one_transaction.cash_number)},
-                                                  {_XPLATSTR("checkNumber"), json::value::number(static_cast<uint32_t>(one_transaction.check_number))},
+                                                  {_XPLATSTR("cardNumber"), json::value::number(one_transaction->card_number)},
+                                                  {_XPLATSTR("ownerNumber"), json::value::number(one_transaction->owner_number)},
+                                                  {_XPLATSTR("billNumber"), json::value::number(static_cast<uint32_t>(one_transaction->bill_number))},
+                                                  {_XPLATSTR("operationType"), json::value::number(one_transaction->operation_type)},
+                                                  {_XPLATSTR("amount"), json::value::number(one_transaction->amount)},
+                                                  {_XPLATSTR("restaurantCode"), json::value::number(one_transaction->restaurant_code)},
+                                                  {_XPLATSTR("cashDate"), json::value::number(static_cast<uint32_t>(one_transaction->cash_date))},
+                                                  {_XPLATSTR("cashNumber"), json::value::number(one_transaction->cash_number)},
+                                                  {_XPLATSTR("checkNumber"), json::value::number(static_cast<uint32_t>(one_transaction->check_number))},
                                                   {_XPLATSTR("tax"), json::value::array({
                                                                                             json::value::object({
-                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax1_amount)},
-                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax1_percent)},
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction->tax1_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction->tax1_percent)},
                                                                                                                 }),
                                                                                             json::value::object({
-                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax2_amount)},
-                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax2_percent)},
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction->tax2_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction->tax2_percent)},
                                                                                                                 }),
                                                                                             json::value::object({
-                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax3_amount)},
-                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax3_percent)},
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction->tax3_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction->tax3_percent)},
                                                                                                                 }),
                                                                                             json::value::object({
-                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax4_amount)},
-                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax4_percent)},
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction->tax4_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction->tax4_percent)},
                                                                                                                 }),
                                                                                             json::value::object({
-                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax5_amount)},
-                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax5_percent)},
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction->tax5_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction->tax5_percent)},
                                                                                                                 }),
                                                                                             json::value::object({
-                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax6_amount)},
-                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax6_percent)},
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction->tax6_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction->tax6_percent)},
                                                                                                                 }),
                                                                                             json::value::object({
-                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax7_amount)},
-                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax7_percent)},
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction->tax7_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction->tax7_percent)},
                                                                                                                 }),
                                                                                             json::value::object({
-                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction.tax8_amount)},
-                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction.tax8_percent)},
+                                                                                                                    {_XPLATSTR("amount"), json::value::number(one_transaction->tax8_amount)},
+                                                                                                                    {_XPLATSTR("percent"), json::value::number(one_transaction->tax8_percent)},
                                                                                                                 }),
                                                                                         })},
                                               });

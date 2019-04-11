@@ -20,7 +20,7 @@ extern "C" int IQLOYALTY_EXPORT GetCardInfoEx(
         WORD output_kind);
 
 extern "C" int IQLOYALTY_EXPORT TransactionsEx(DWORD count,
-                                               transaction* transactions,
+                                               transaction** transactions,
                                                char* input_buffer,
                                                DWORD input_buffer_length,
                                                WORD input_bufferKind,
