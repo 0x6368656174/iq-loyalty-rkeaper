@@ -62,6 +62,11 @@ std::string to_cp1251 (const utility::string_t& str)
 #endif
 }
 
+auto host = API_HOST;
+auto url = API_URL;
+auto shop_id = _XPLATSTR("");
+auto shop_secret = _XPLATSTR("");
+
 void Init()
 {
   static bool inited = false;
@@ -84,6 +89,23 @@ void Init()
                         << ": " << boost::log::expressions::smessage
                 )
         );
+
+#ifdef _WIN32
+    wchar_t host_str[1024];
+    wchar_t url_str[1024];
+    wchar_t shop_id_str[1024];
+    wchar_t shop_secret_str[1024];
+
+    GetPrivateProfileStringW(NULL, L"host", NULL, host_str, sizeof(host_str), L"iqloyalty.ini");
+    GetPrivateProfileStringW(NULL, L"url", NULL, url_str, sizeof(url_str), L"iqloyalty.ini");
+    GetPrivateProfileStringW(NULL, L"shop_id", NULL, shop_id_str, sizeof(shop_id_str), L"iqloyalty.ini");
+    GetPrivateProfileStringW(NULL, L"shop_secret", NULL, shop_secret_str, sizeof(shop_secret_str), L"iqloyalty.ini");
+
+    host = host_str;
+    url = url_str;
+    shop_id = shop_id_str;
+    shop_secret = shop_secret_str;
+#endif
   }
 
   BOOST_LOG_TRIVIAL(info) << "============= INIT LIB =============";
