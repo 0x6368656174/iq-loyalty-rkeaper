@@ -234,7 +234,7 @@ int TransactionsEx(DWORD count,
   {
     auto transactions_json = json::value::array(count);
 
-    for (int i = 0; i < count; ++i) {
+    for (DWORD i = 0; i < count; ++i) {
       auto one_transaction = *(transactions + i);
       auto card_number = one_transaction.card_number;
       if (card_number < 100000000) {
@@ -251,13 +251,13 @@ int TransactionsEx(DWORD count,
       auto rkeeper_json = json::value::object({
                                                   {_XPLATSTR("cardNumber"), json::value::number(one_transaction.card_number)},
                                                   {_XPLATSTR("ownerNumber"), json::value::number(one_transaction.owner_number)},
-                                                  {_XPLATSTR("billNumber"), json::value::number(one_transaction.bill_number)},
+                                                  {_XPLATSTR("billNumber"), json::value::number(static_cast<uint32_t>(one_transaction.bill_number))},
                                                   {_XPLATSTR("operationType"), json::value::number(one_transaction.operation_type)},
                                                   {_XPLATSTR("amount"), json::value::number(one_transaction.amount)},
                                                   {_XPLATSTR("restaurantCode"), json::value::number(one_transaction.restaurant_code)},
-                                                  {_XPLATSTR("cashDate"), json::value::number(one_transaction.cash_date)},
+                                                  {_XPLATSTR("cashDate"), json::value::number(static_cast<uint32_t>(one_transaction.cash_date))},
                                                   {_XPLATSTR("cashNumber"), json::value::number(one_transaction.cash_number)},
-                                                  {_XPLATSTR("checkNumber"), json::value::number(one_transaction.check_number)},
+                                                  {_XPLATSTR("checkNumber"), json::value::number(static_cast<uint32_t>(one_transaction.check_number))},
                                                   {_XPLATSTR("tax"), json::value::array({
                                                                                             json::value::object({
                                                                                                                     {_XPLATSTR("amount"), json::value::number(one_transaction.tax1_amount)},
@@ -333,8 +333,7 @@ int TransactionsEx(DWORD count,
 
       auto result = response.as_object().at(_XPLATSTR("data")).as_object().at(_XPLATSTR("makeTransactions")).as_bool();
       if (!result) {
-        BOOST_LOG_TRIVIAL(error) << "Wrong answer on send transactions";
-        return 1;
+        throw std::exception("Wrong answer");
       }
     }).wait();
 
